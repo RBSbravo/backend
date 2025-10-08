@@ -11,7 +11,9 @@ const getSequelize = () => {
   console.log('MySQL User:', process.env.MYSQL_USER);
   console.log('MySQL Port:', process.env.MYSQL_PORT);
 
-  if (process.env.NODE_ENV === 'test') {
+  // Only use test config if we're actually running tests AND no Railway MySQL is configured
+  if (process.env.NODE_ENV === 'test' && !process.env.MYSQL_HOST) {
+    console.log('Using test database configuration');
     return new Sequelize(
       testConfig.database.database,
       testConfig.database.username,
@@ -27,6 +29,7 @@ const getSequelize = () => {
   }
 
   // Railway MySQL configuration (prioritize Railway env vars)
+  console.log('Using Railway MySQL configuration');
   const dbConfig = {
     database: process.env.MYSQL_DATABASE || process.env.DB_NAME || 'ticketing_system',
     username: process.env.MYSQL_USER || process.env.DB_USER || 'root',
