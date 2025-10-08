@@ -4,6 +4,13 @@ const testConfig = require('./test.config');
 const prodConfig = require('./prod.config');
 
 const getSequelize = () => {
+  // Debug logging
+  console.log('Environment:', process.env.NODE_ENV);
+  console.log('MySQL Host:', process.env.MYSQL_HOST);
+  console.log('MySQL Database:', process.env.MYSQL_DATABASE);
+  console.log('MySQL User:', process.env.MYSQL_USER);
+  console.log('MySQL Port:', process.env.MYSQL_PORT);
+
   if (process.env.NODE_ENV === 'test') {
     return new Sequelize(
       testConfig.database.database,
@@ -19,22 +26,7 @@ const getSequelize = () => {
     );
   }
 
-  if (process.env.NODE_ENV === 'production') {
-    return new Sequelize(
-      prodConfig.database.database,
-      prodConfig.database.username,
-      prodConfig.database.password,
-      {
-        host: prodConfig.database.host,
-        dialect: prodConfig.database.dialect,
-        logging: prodConfig.database.logging,
-        pool: prodConfig.database.pool,
-        define: prodConfig.database.define
-      }
-    );
-  }
-
-  // Railway MySQL configuration
+  // Railway MySQL configuration (prioritize Railway env vars)
   const dbConfig = {
     database: process.env.MYSQL_DATABASE || process.env.DB_NAME || 'ticketing_system',
     username: process.env.MYSQL_USER || process.env.DB_USER || 'root',
@@ -55,15 +47,24 @@ const getSequelize = () => {
     }
   };
 
-  // Add SSL configuration for Railway
-  if (process.env.NODE_ENV === 'production' && process.env.MYSQL_HOST) {
+  // Add SSL configuration for Railway MySQL
+  if (process.env.MYSQL_HOST || process.env.NODE_ENV === 'production') {
     dbConfig.dialectOptions = {
       ssl: {
         require: true,
         rejectUnauthorized: false
       }
     };
+    console.log('Using SSL configuration for Railway MySQL');
   }
+
+  console.log('Database configuration:', {
+    host: dbConfig.host,
+    port: dbConfig.port,
+    database: dbConfig.database,
+    username: dbConfig.username,
+    ssl: !!dbConfig.dialectOptions?.ssl
+  });
 
   return new Sequelize(dbConfig.database, dbConfig.username, dbConfig.password, dbConfig);
 };
