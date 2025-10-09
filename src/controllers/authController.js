@@ -1,25 +1,14 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
-const nodemailer = require('nodemailer');
+const sgMail = require('@sendgrid/mail');
 const { User, UserSession, Department } = require('../models');
 const { Op } = require('sequelize');
 const testConfig = require('../config/test.config');
 const notificationService = require('../services/notificationService');
 
-// Configure email transporter
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.example.com',
-  port: parseInt(process.env.EMAIL_PORT) || 587,
-  secure: parseInt(process.env.EMAIL_PORT) === 465, // true for 465, false for other ports
-  auth: {
-    user: process.env.EMAIL_USER || 'user@example.com',
-    pass: process.env.EMAIL_PASSWORD || 'password'
-  },
-  tls: {
-    rejectUnauthorized: false
-  }
-});
+// Configure SendGrid API
+sgMail.setApiKey(process.env.SENDGRID_API_KEY || process.env.EMAIL_PASSWORD || '');
 
 // Simplified: Use single web URL for all platforms
 const sendPasswordResetEmail = async (email, resetToken) => {
@@ -27,9 +16,9 @@ const sendPasswordResetEmail = async (email, resetToken) => {
   const baseUrl = process.env.FRONTEND_URL_WEB || 'http://localhost:5173';
   const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
   
-  const mailOptions = {
-    from: process.env.EMAIL_FROM || 'noreply@example.com',
+  const msg = {
     to: email,
+    from: process.env.EMAIL_FROM || 'noreply@example.com',
     subject: 'Password Reset Request',
     html: `
       <h2>Password Reset Request</h2>
@@ -59,7 +48,13 @@ const sendPasswordResetEmail = async (email, resetToken) => {
     `
   };
 
-  await transporter.sendMail(mailOptions);
+  try {
+    await sgMail.send(msg);
+    console.log('Password reset email sent successfully via SendGrid API');
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw error;
+  }
 };
 
 // Get JWT secret based on environment
@@ -431,44 +426,46 @@ const testEmail = async (req, res) => {
       return res.status(400).json({ error: 'Email is required' });
     }
     
-    // Test email configuration
+    // Test SendGrid API configuration
     const config = {
-      host: process.env.EMAIL_HOST || 'smtp.example.com',
-      port: process.env.EMAIL_PORT || 587,
-      user: process.env.EMAIL_USER || 'user@example.com',
-      hasPassword: !!process.env.EMAIL_PASSWORD,
-      hasPass: !!process.env.EMAIL_PASS,
+      hasApiKey: !!process.env.SENDGRID_API_KEY,
+      hasEmailPassword: !!process.env.EMAIL_PASSWORD,
       from: process.env.EMAIL_FROM || 'noreply@example.com',
-      frontendUrl: process.env.FRONTEND_URL_WEB || 'http://localhost:5173'
+      frontendUrl: process.env.FRONTEND_URL_WEB || 'http://localhost:5173',
+      apiKeyPrefix: process.env.SENDGRID_API_KEY ? process.env.SENDGRID_API_KEY.substring(0, 10) + '...' : 'Not set'
     };
     
-    // Try to verify email configuration
+    // Try to send a test email using SendGrid API
     try {
-      await transporter.verify();
+      const testMsg = {
+        to: email,
+        from: config.from,
+        subject: 'SendGrid API Test',
+        text: 'This is a test email from SendGrid API',
+        html: '<p>This is a test email from <strong>SendGrid API</strong></p>'
+      };
+      
+      await sgMail.send(testMsg);
       res.json({ 
-        message: 'Email configuration verified successfully',
+        message: 'SendGrid API email sent successfully',
         config: {
-          host: config.host,
-          port: config.port,
-          user: config.user,
-          hasPassword: config.hasPassword,
-          hasPass: config.hasPass,
+          hasApiKey: config.hasApiKey,
+          hasEmailPassword: config.hasEmailPassword,
           from: config.from,
-          frontendUrl: config.frontendUrl
+          frontendUrl: config.frontendUrl,
+          apiKeyPrefix: config.apiKeyPrefix
         }
       });
-    } catch (verifyError) {
+    } catch (sendError) {
       res.status(500).json({ 
-        error: 'Email configuration verification failed',
-        details: verifyError.message,
+        error: 'SendGrid API email sending failed',
+        details: sendError.message,
         config: {
-          host: config.host,
-          port: config.port,
-          user: config.user,
-          hasPassword: config.hasPassword,
-          hasPass: config.hasPass,
+          hasApiKey: config.hasApiKey,
+          hasEmailPassword: config.hasEmailPassword,
           from: config.from,
-          frontendUrl: config.frontendUrl
+          frontendUrl: config.frontendUrl,
+          apiKeyPrefix: config.apiKeyPrefix
         }
       });
     }
