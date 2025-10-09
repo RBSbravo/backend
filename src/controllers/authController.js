@@ -8,7 +8,13 @@ const testConfig = require('../config/test.config');
 const notificationService = require('../services/notificationService');
 
 // Configure SendGrid API
-sgMail.setApiKey(process.env.SENDGRID_API_KEY || process.env.EMAIL_PASSWORD || '');
+const sendGridApiKey = process.env.SENDGRID_API_KEY || process.env.EMAIL_PASSWORD;
+if (sendGridApiKey) {
+  sgMail.setApiKey(sendGridApiKey);
+  console.log('SendGrid API configured successfully');
+} else {
+  console.warn('SendGrid API key not found. Email functionality will be disabled.');
+}
 
 // Simplified: Use single web URL for all platforms
 const sendPasswordResetEmail = async (email, resetToken) => {
@@ -49,6 +55,9 @@ const sendPasswordResetEmail = async (email, resetToken) => {
   };
 
   try {
+    if (!sendGridApiKey) {
+      throw new Error('SendGrid API key not configured');
+    }
     await sgMail.send(msg);
     console.log('Password reset email sent successfully via SendGrid API');
   } catch (error) {
@@ -437,6 +446,10 @@ const testEmail = async (req, res) => {
     
     // Try to send a test email using SendGrid API
     try {
+      if (!sendGridApiKey) {
+        throw new Error('SendGrid API key not configured');
+      }
+      
       const testMsg = {
         to: email,
         from: config.from,
