@@ -20,7 +20,17 @@ const server = http.createServer(app);
 const io = initializeSocket(server);
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:3000', 
+    'http://localhost:8081',
+    'exp://192.168.1.100:8081',
+    'https://mito-ticketing-system.vercel.app',
+    'https://ticketing-and-task-management-syste.vercel.app'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 

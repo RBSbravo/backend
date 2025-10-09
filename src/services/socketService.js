@@ -4,7 +4,14 @@ let io;
 const initializeSocket = (server) => {
   io = socketIO(server, {
     cors: {
-      origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:8081', 'exp://192.168.1.100:8081'],
+      origin: [
+        'http://localhost:5173', 
+        'http://localhost:3000', 
+        'http://localhost:8081', 
+        'exp://192.168.1.100:8081',
+        'https://mito-ticketing-system.vercel.app',
+        'https://ticketing-and-task-management-syste.vercel.app'
+      ],
       methods: ['GET', 'POST'],
       credentials: true
     }
