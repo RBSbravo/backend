@@ -422,18 +422,53 @@ const changePassword = async (req, res) => {
 
 // Test email endpoint (for development only)
 const testEmail = async (req, res) => {
-  if (process.env.NODE_ENV !== 'development') {
-    return res.status(404).json({ error: 'Not found' });
-  }
-  
   try {
     const { email } = req.body;
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
     }
     
-    await sendPasswordResetEmail(email, 'test-token-123');
-    res.json({ message: 'Test email sent successfully' });
+    // Test email configuration
+    const config = {
+      host: process.env.EMAIL_HOST || 'smtp.example.com',
+      port: process.env.EMAIL_PORT || 587,
+      user: process.env.EMAIL_USER || 'user@example.com',
+      hasPassword: !!process.env.EMAIL_PASSWORD,
+      hasPass: !!process.env.EMAIL_PASS,
+      from: process.env.EMAIL_FROM || 'noreply@example.com',
+      frontendUrl: process.env.FRONTEND_URL_WEB || 'http://localhost:5173'
+    };
+    
+    // Try to verify email configuration
+    try {
+      await transporter.verify();
+      res.json({ 
+        message: 'Email configuration verified successfully',
+        config: {
+          host: config.host,
+          port: config.port,
+          user: config.user,
+          hasPassword: config.hasPassword,
+          hasPass: config.hasPass,
+          from: config.from,
+          frontendUrl: config.frontendUrl
+        }
+      });
+    } catch (verifyError) {
+      res.status(500).json({ 
+        error: 'Email configuration verification failed',
+        details: verifyError.message,
+        config: {
+          host: config.host,
+          port: config.port,
+          user: config.user,
+          hasPassword: config.hasPassword,
+          hasPass: config.hasPass,
+          from: config.from,
+          frontendUrl: config.frontendUrl
+        }
+      });
+    }
   } catch (error) {
     console.error('Test email error:', error);
     res.status(500).json({ error: error.message });
