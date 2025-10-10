@@ -26,7 +26,8 @@ app.use(cors({
     'http://localhost:3000', 
     'http://localhost:8081',
     'exp://192.168.1.100:8081',
-    'https://mito-ticketing-system.vercel.app'
+    'https://mito-ticketing-system.vercel.app',
+    'https://task-manager-application-psi-blond.vercel.app'
   ],
   credentials: true
 }));
