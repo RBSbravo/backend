@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { User, UserSession } = require('../models');
 const { authenticateToken } = require('../middleware/auth');
+const { authLimiter, strictAuthLimiter, passwordResetLimiter } = require('../middleware/rateLimiting');
 const { 
   register,
   login,
@@ -143,10 +144,10 @@ const handleValidationErrors = (req, res, next) => {
 };
 
 // Login route
-router.post('/login', validateLogin, handleValidationErrors, login);
+router.post('/login', authLimiter, validateLogin, handleValidationErrors, login);
 
 // Register route
-router.post('/register', validateRegistration, handleValidationErrors, register);
+router.post('/register', authLimiter, validateRegistration, handleValidationErrors, register);
 
 // Get profile route
 router.get('/me', authenticateToken, getProfile);
@@ -154,19 +155,19 @@ router.get('/me', authenticateToken, getProfile);
 router.get('/profile', authenticateToken, getProfile);
 
 // Forgot password route
-router.post('/forgot-password', validateForgotPassword, handleValidationErrors, forgotPassword);
+router.post('/forgot-password', passwordResetLimiter, validateForgotPassword, handleValidationErrors, forgotPassword);
 
 // Reset password route
-router.post('/reset-password', validateResetPassword, handleValidationErrors, resetPassword);
+router.post('/reset-password', strictAuthLimiter, validateResetPassword, handleValidationErrors, resetPassword);
 
 // Verify reset token route
 router.get('/verify-reset-token/:token', verifyResetToken);
 
 // Change password route
-router.post('/change-password', authenticateToken, validateChangePassword, handleValidationErrors, changePassword);
+router.post('/change-password', authLimiter, authenticateToken, validateChangePassword, handleValidationErrors, changePassword);
 
 // Test email route (development only)
-router.post('/test-email', testEmail);
+router.post('/test-email', authLimiter, testEmail);
 
 router.post('/logout', validateSession, async (req, res) => {
   try {
