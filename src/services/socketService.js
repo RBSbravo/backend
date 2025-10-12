@@ -10,7 +10,8 @@ const initializeSocket = (server) => {
         'http://localhost:8081', 
         'exp://192.168.1.100:8081',
         'https://mito-ticketing-system.vercel.app',
-        'https://ticketing-and-task-management-syste.vercel.app'
+        'https://ticketing-and-task-management-syste.vercel.app',
+        'https://task-management-app-three-orpin.vercel.app'
       ],
       methods: ['GET', 'POST'],
       credentials: true
