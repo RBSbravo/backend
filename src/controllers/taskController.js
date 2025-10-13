@@ -191,16 +191,9 @@ const updateTask = async (req, res) => {
       }
     }
     if (req.body.assignedToId) {
-      console.log('🔔 Backend task assignment detected:', { 
-        taskId: id, 
-        assignedToId: req.body.assignedToId, 
-        currentUserId: req.user.id 
-      });
-      
       emitTaskAssignment(id, req.body.assignedToId);
       // Notify new assignee
       if (req.body.assignedToId !== req.user.id) {
-        console.log('🔔 Backend creating assigned task notification for user:', req.body.assignedToId);
         await createNotification(
           req.body.assignedToId,
           'task_assigned',
@@ -208,8 +201,6 @@ const updateTask = async (req, res) => {
           task.id,
           req.user.id
         );
-      } else {
-        console.log('🔔 Backend skipping notification - user assigning task to themselves');
       }
     }
     // Notify on general task update (if any field except assignment/status changed)

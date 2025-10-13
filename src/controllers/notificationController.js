@@ -101,8 +101,6 @@ const getUnreadCount = async (req, res) => {
 
 const createNotification = async (userId, type, message, taskId, relatedUserId) => {
   try {
-    console.log('🔔 Backend creating notification:', { userId, type, message, taskId, relatedUserId });
-    
     const notification = await Notification.create({
       type,
       message,
@@ -112,15 +110,11 @@ const createNotification = async (userId, type, message, taskId, relatedUserId) 
       isRead: false
     });
 
-    console.log('🔔 Backend notification created:', notification);
-
     // Emit WebSocket event for new notification
-    console.log('🔔 Backend emitting notification to user:', userId);
     emitNotification(userId, notification);
 
     return notification;
   } catch (error) {
-    console.error('🔔 Backend notification creation error:', error);
     throw error;
   }
 };
