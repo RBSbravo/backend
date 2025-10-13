@@ -29,9 +29,14 @@ const initializeSocket = (server) => {
   });
 
   io.on('connection', (socket) => {
+    console.log('🔌 Backend SocketService new connection:', socket.id);
+    
     // Join user's room for private notifications
     socket.on('join', (userId) => {
-      socket.join(`user_${userId}`);
+      const roomName = `user_${userId}`;
+      console.log('🔌 Backend SocketService user joining room:', { socketId: socket.id, userId, roomName });
+      socket.join(roomName);
+      console.log('🔌 Backend SocketService user joined room successfully');
     });
 
     // Handle mobile app specific events
@@ -85,11 +90,24 @@ const emitPerformanceUpdate = (performance) => {
 };
 
 const emitNotification = (userId, notification) => {
+  console.log('🔔 Backend SocketService emitNotification called:', { userId, notification });
+  
   if (io) {
-    io.to(`user_${userId}`).emit('notification', {
+    const roomName = `user_${userId}`;
+    console.log('🔔 Backend SocketService emitting to room:', roomName);
+    console.log('🔔 Backend SocketService notification data:', {
       type: 'NEW_NOTIFICATION',
       data: notification
     });
+    
+    io.to(roomName).emit('notification', {
+      type: 'NEW_NOTIFICATION',
+      data: notification
+    });
+    
+    console.log('🔔 Backend SocketService notification emitted successfully');
+  } else {
+    console.log('🔔 Backend SocketService io is not available');
   }
 };
 
