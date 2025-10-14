@@ -90,7 +90,7 @@ router.post(
         const ticket = await Ticket.findByPk(req.params.ticketId, { include: [{ model: Department }, { model: User, as: 'assignee' }] });
         if (ticket && ticket.department_id) {
           const deptHead = await User.findOne({ where: { departmentId: ticket.department_id, role: 'department_head' } });
-          if (deptHead) {
+          if (deptHead && deptHead.id !== req.user.id) {
             await notificationService.createNotification({
               userId: deptHead.id,
               type: 'file_uploaded',
@@ -100,7 +100,7 @@ router.post(
             });
           }
         }
-        if (ticket && ticket.assigned_to) {
+        if (ticket && ticket.assigned_to && ticket.assigned_to !== req.user.id) {
           await notificationService.createNotification({
             userId: ticket.assigned_to,
             type: 'file_uploaded',
@@ -161,7 +161,7 @@ router.post(
         const task = await Task.findByPk(req.params.taskId, { include: [{ model: Department }, { model: User, as: 'assignedUser' }] });
         if (task && task.departmentId) {
           const deptHead = await User.findOne({ where: { departmentId: task.departmentId, role: 'department_head' } });
-          if (deptHead) {
+          if (deptHead && deptHead.id !== req.user.id) {
             await notificationService.createNotification({
               userId: deptHead.id,
               type: 'file_uploaded',
@@ -171,7 +171,7 @@ router.post(
             });
           }
         }
-        if (task && task.assignedToId) {
+        if (task && task.assignedToId && task.assignedToId !== req.user.id) {
           await notificationService.createNotification({
             userId: task.assignedToId,
             type: 'file_uploaded',

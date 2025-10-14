@@ -228,8 +228,13 @@ const updateTask = async (req, res) => {
     }
     if (generalUpdate) {
       const notifyUsers = [];
-      if (updatedTask.assignedToId) notifyUsers.push(updatedTask.assignedToId);
-      if (updatedTask.createdBy && updatedTask.createdBy !== updatedTask.assignedToId) notifyUsers.push(updatedTask.createdBy);
+      // Only notify users other than the one making the update
+      if (updatedTask.assignedToId && updatedTask.assignedToId !== req.user.id) {
+        notifyUsers.push(updatedTask.assignedToId);
+      }
+      if (updatedTask.createdBy && updatedTask.createdBy !== updatedTask.assignedToId && updatedTask.createdBy !== req.user.id) {
+        notifyUsers.push(updatedTask.createdBy);
+      }
       for (const userId of notifyUsers) {
         await createNotification(
           userId,
