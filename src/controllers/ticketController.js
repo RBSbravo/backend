@@ -58,8 +58,8 @@ const ticketController = {
       current_handler_id: assignedTo || createdBy
     });
 
-    // Notify assigned user
-    if (assignedTo) {
+    // Notify assigned user (only if different from creator)
+    if (assignedTo && assignedTo !== createdBy) {
       await notificationService.createNotification({
         userId: assignedTo,
         type: 'ticket_assigned',
@@ -69,12 +69,12 @@ const ticketController = {
       });
     }
 
-    // Notify department head
+    // Notify department head (only if different from creator)
     const department = await Department.findByPk(departmentId, {
       include: [{ model: User, where: { role: 'department_head' } }]
     });
 
-    if (department && department.Users.length > 0) {
+    if (department && department.Users.length > 0 && department.Users[0].id !== createdBy) {
       await notificationService.createNotification({
         userId: department.Users[0].id,
         type: 'new_ticket',
@@ -251,8 +251,8 @@ const ticketController = {
       });
     }
 
-    // Notify new assignee if assignment changed
-    if (isNewAssignment) {
+    // Notify new assignee if assignment changed (only if different from updater)
+    if (isNewAssignment && assignedTo !== req.user.id) {
       await notificationService.createNotification({
         userId: assignedTo,
         type: 'ticket_assigned',
@@ -262,10 +262,11 @@ const ticketController = {
       });
     }
 
-    // Notify status change
+    // Notify status change (exclude the user who made the change)
     if (status && status !== ticket.status) {
-      const notifyUsers = [ticket.created_by];
-      if (ticket.assigned_to) notifyUsers.push(ticket.assigned_to);
+      const notifyUsers = [];
+      if (ticket.created_by !== req.user.id) notifyUsers.push(ticket.created_by);
+      if (ticket.assigned_to && ticket.assigned_to !== req.user.id) notifyUsers.push(ticket.assigned_to);
 
       for (const userId of notifyUsers) {
         await notificationService.createNotification({
@@ -289,8 +290,8 @@ const ticketController = {
     }
     if (generalUpdate) {
       const notifyUsers = [];
-      if (updatedTicket.assigned_to) notifyUsers.push(updatedTicket.assigned_to);
-      if (updatedTicket.created_by && updatedTicket.created_by !== updatedTicket.assigned_to) notifyUsers.push(updatedTicket.created_by);
+      if (updatedTicket.assigned_to && updatedTicket.assigned_to !== req.user.id) notifyUsers.push(updatedTicket.assigned_to);
+      if (updatedTicket.created_by && updatedTicket.created_by !== updatedTicket.assigned_to && updatedTicket.created_by !== req.user.id) notifyUsers.push(updatedTicket.created_by);
       for (const userId of notifyUsers) {
         await notificationService.createNotification({
           userId,
