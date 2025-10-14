@@ -22,6 +22,20 @@ const createTask = async (req, res) => {
       relatedTicketId
     });
 
+    // Notify assigned user if task is assigned to someone other than the creator
+    if (assignedToId && assignedToId !== createdBy) {
+      await createNotification(
+        assignedToId,
+        'task_assigned',
+        `You have been assigned to task "${title}"`,
+        task.id,
+        createdBy
+      );
+      
+      // Emit WebSocket event for task assignment
+      emitTaskAssignment(task.id, assignedToId);
+    }
+
     const taskWithAssociations = await Task.findByPk(task.id, {
       include: [
         {
