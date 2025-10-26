@@ -636,6 +636,30 @@ const ticketController = {
     }
   },
 
+  // Get tickets that have been forwarded by the current user
+  async getTicketsForwardedByMe(req, res) {
+    try {
+      const tickets = await Ticket.findAll({
+        where: { 
+          forwarded_from_id: req.user.id,
+          is_forwarded: true
+        },
+        include: [
+          { model: User, as: 'ticketCreator', attributes: ['id', 'firstname', 'lastname', 'email'] },
+          { model: User, as: 'ticketAssignee', attributes: ['id', 'firstname', 'lastname', 'email'] },
+          { model: User, as: 'forwardedTo', attributes: ['id', 'firstname', 'lastname', 'email'] },
+          { model: Department, attributes: ['id', 'name'] }
+        ],
+        order: [['created_at', 'DESC']]
+      });
+
+      res.json({ tickets });
+    } catch (error) {
+      console.error('Error getting tickets forwarded by me:', error);
+      res.status(500).json({ error: 'Failed to get tickets forwarded by me' });
+    }
+  },
+
   // Get tickets assigned to current user
   async getAssignedTickets(req, res) {
     try {

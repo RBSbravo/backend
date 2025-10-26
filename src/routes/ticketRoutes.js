@@ -12,6 +12,9 @@ router.get('/assigned', authenticateToken, ticketController.getAssignedTickets);
 // Get forwarded tickets
 router.get('/forwarded-to-me', authenticateToken, ticketController.getTicketsForwardedToMe);
 
+// Get tickets forwarded by me
+router.get('/forwarded-by-me', authenticateToken, ticketController.getTicketsForwardedByMe);
+
 // Get ticket statistics
 router.get('/stats/analytics', authenticateToken, ticketController.getTicketStats);
 
