@@ -1,4 +1,6 @@
 const socketIO = require('socket.io');
+const jwt = require('jsonwebtoken');
+const { User, UserSession } = require('../models');
 let io;
 
 const initializeSocket = (server) => {
@@ -11,7 +13,8 @@ const initializeSocket = (server) => {
         'exp://192.168.1.100:8081',
         'https://mito-ticketing-system.vercel.app',
         'https://ticketing-and-task-management-syste.vercel.app',
-        'https://task-management-app-three-orpin.vercel.app'
+        'https://task-management-app-three-orpin.vercel.app',
+        'https://mito-pwa-mobile-app.vercel.app'
       ],
       methods: ['GET', 'POST'],
       credentials: true
@@ -19,19 +22,64 @@ const initializeSocket = (server) => {
   });
 
   // Authentication middleware
-  io.use((socket, next) => {
-    const token = socket.handshake.auth.token;
-    if (!token) {
-      return next(new Error('Authentication error'));
+  io.use(async (socket, next) => {
+    try {
+      const token = socket.handshake.auth.token;
+      if (!token) {
+        return next(new Error('Authentication error: No token provided'));
+      }
+
+      // Get JWT secret (same logic as auth middleware)
+      const getJwtSecret = () => {
+        const testConfig = require('../config/test.config');
+        return process.env.NODE_ENV === 'test' ? testConfig.jwt.secret : process.env.JWT_SECRET;
+      };
+
+      // Verify session is active
+      const session = await UserSession.findOne({ where: { token, isActive: true } });
+      if (!session) {
+        return next(new Error('Authentication error: Invalid or expired session'));
+      }
+
+      // Verify JWT token
+      const decoded = jwt.verify(token, getJwtSecret());
+      
+      // Get user from database
+      const user = await User.findByPk(decoded.id);
+      if (!user) {
+        return next(new Error('Authentication error: User not found'));
+      }
+
+      if (user.status !== 'approved') {
+        return next(new Error('Authentication error: Account not approved'));
+      }
+
+      // Update session activity timestamp
+      await session.update({ updatedAt: new Date() });
+
+      // Attach user info to socket for later use
+      socket.userId = user.id;
+      socket.user = user;
+      
+      next();
+    } catch (error) {
+      console.error('Socket authentication error:', error);
+      next(new Error('Authentication error: ' + error.message));
     }
-    // Add user authentication logic here
-    next();
   });
 
   io.on('connection', (socket) => {
-    // Join user's room for private notifications
+    console.log(`Socket connected for user: ${socket.userId}`);
+    
+    // Automatically join user's room for private notifications
+    socket.join(`user_${socket.userId}`);
+    
+    // Legacy join handler (for backward compatibility)
     socket.on('join', (userId) => {
-      socket.join(`user_${userId}`);
+      // Verify the userId matches the authenticated user
+      if (userId === socket.userId) {
+        socket.join(`user_${userId}`);
+      }
     });
 
     // Handle mobile app specific events
