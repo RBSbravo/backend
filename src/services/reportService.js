@@ -19,49 +19,35 @@ async function generateCustomReport(reportId, userRole = null) {
   }
 
   let data;
-  
-  // Check if report has a stored snapshot (static report)
-  if (report.parameters && report.parameters.dataSnapshot) {
-    // Use stored snapshot for static reports
-    data = report.parameters.dataSnapshot;
-    console.log(`Using stored snapshot for report ${reportId}, generated at ${report.parameters.snapshotGeneratedAt}`);
-  } else {
-    // Generate data dynamically (fallback for old reports without snapshots)
-    // Extract clean parameters (excluding snapshot fields)
-    const cleanParameters = { ...report.parameters };
-    delete cleanParameters.dataSnapshot;
-    delete cleanParameters.snapshotGeneratedAt;
-    
-    try {
-      switch (report.type) {
-        case 'task':
-          data = await reportGenerationService.generateTaskReport(cleanParameters, userRole || (report.reportCreator && report.reportCreator.role));
-          break;
-        case 'ticket':
-          data = await reportGenerationService.generateTicketReport(cleanParameters, userRole || (report.reportCreator && report.reportCreator.role));
-          break;
-        case 'user':
-          data = await reportGenerationService.generateUserReport(cleanParameters);
-          break;
-        case 'department':
-          data = await reportGenerationService.generateDepartmentReport(cleanParameters, report.reportCreator.role);
-          break;
-        case 'custom':
-          data = await reportGenerationService.generateCustomReportData(cleanParameters);
-          break;
-        default:
-          throw new Error('Invalid report type');
-      }
-    } catch (error) {
-      console.error(`Error generating ${report.type} report:`, error);
-      data = {
-        error: `Failed to generate ${report.type} report: ${error.message}`,
-        summary: {
-          totalRecords: 0,
-          message: 'No data available for the specified criteria'
-        }
-      };
+  try {
+    switch (report.type) {
+      case 'task':
+        data = await reportGenerationService.generateTaskReport(report.parameters, userRole || (report.reportCreator && report.reportCreator.role));
+        break;
+      case 'ticket':
+        data = await reportGenerationService.generateTicketReport(report.parameters, userRole || (report.reportCreator && report.reportCreator.role));
+        break;
+      case 'user':
+        data = await reportGenerationService.generateUserReport(report.parameters);
+        break;
+      case 'department':
+        data = await reportGenerationService.generateDepartmentReport(report.parameters, report.reportCreator.role);
+        break;
+      case 'custom':
+        data = await reportGenerationService.generateCustomReportData(report.parameters);
+        break;
+      default:
+        throw new Error('Invalid report type');
     }
+  } catch (error) {
+    console.error(`Error generating ${report.type} report:`, error);
+    data = {
+      error: `Failed to generate ${report.type} report: ${error.message}`,
+      summary: {
+        totalRecords: 0,
+        message: 'No data available for the specified criteria'
+      }
+    };
   }
 
   return {
@@ -69,8 +55,7 @@ async function generateCustomReport(reportId, userRole = null) {
       title: report.name,
       generatedBy: report.reportCreator ? `${report.reportCreator.firstname} ${report.reportCreator.lastname}` : null,
       createdAt: report.createdAt,
-      type: report.type,
-      snapshotGeneratedAt: report.parameters?.snapshotGeneratedAt || null
+      type: report.type
     },
     data
   };
