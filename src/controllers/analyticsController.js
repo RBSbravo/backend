@@ -845,6 +845,13 @@ class AnalyticsController {
 
       const reportData = await reportGenerationService.generateTicketReport(parameters, req.user.role);
       
+      // Store data snapshot in parameters for static reports
+      const parametersWithSnapshot = {
+        ...parameters,
+        dataSnapshot: reportData,
+        snapshotGeneratedAt: new Date().toISOString()
+      };
+      
       // Check if a similar report already exists to prevent duplicates
       const existingReport = await CustomReport.findOne({
         where: {
@@ -859,16 +866,19 @@ class AnalyticsController {
       
       let savedReport;
       if (existingReport) {
-        // Use existing report if found
+        // Update existing report with snapshot
+        await existingReport.update({
+          parameters: parametersWithSnapshot
+        });
         savedReport = existingReport;
         console.log('Using existing report to prevent duplicate:', existingReport.id);
       } else {
-        // Save new report to database
+        // Save new report to database with snapshot
         savedReport = await CustomReport.create({
           name: parameters.title || `Ticket Report - ${new Date().toLocaleDateString()}`,
           description: parameters.description || 'Generated ticket report',
           type: 'ticket',
-          parameters: parameters,
+          parameters: parametersWithSnapshot,
           createdBy: req.user.id
         });
       }
@@ -914,6 +924,13 @@ class AnalyticsController {
 
       const reportData = await reportGenerationService.generateTaskReport(parameters, req.user.role);
       
+      // Store data snapshot in parameters for static reports
+      const parametersWithSnapshot = {
+        ...parameters,
+        dataSnapshot: reportData,
+        snapshotGeneratedAt: new Date().toISOString()
+      };
+      
       // Check if a similar report already exists to prevent duplicates
       const existingReport = await CustomReport.findOne({
         where: {
@@ -928,16 +945,19 @@ class AnalyticsController {
       
       let savedReport;
       if (existingReport) {
-        // Use existing report if found
+        // Update existing report with snapshot
+        await existingReport.update({
+          parameters: parametersWithSnapshot
+        });
         savedReport = existingReport;
         console.log('Using existing task report to prevent duplicate:', existingReport.id);
       } else {
-        // Save new report to database
+        // Save new report to database with snapshot
         savedReport = await CustomReport.create({
           name: parameters.title || `Task Report - ${new Date().toLocaleDateString()}`,
           description: parameters.description || 'Generated task report',
           type: 'task',
-          parameters: parameters,
+          parameters: parametersWithSnapshot,
           createdBy: req.user.id
         });
       }
@@ -984,6 +1004,13 @@ class AnalyticsController {
 
       const reportData = await reportGenerationService.generateUserReport(parameters);
       
+      // Store data snapshot in parameters for static reports
+      const parametersWithSnapshot = {
+        ...parameters,
+        dataSnapshot: reportData,
+        snapshotGeneratedAt: new Date().toISOString()
+      };
+      
       // Check if a similar report already exists to prevent duplicates
       const reportName = parameters.title || `User Report - ${reportData.userProfile.fullName} - ${new Date().toLocaleDateString()}`;
       const existingReport = await CustomReport.findOne({
@@ -999,16 +1026,19 @@ class AnalyticsController {
       
       let savedReport;
       if (existingReport) {
-        // Use existing report if found
+        // Update existing report with snapshot
+        await existingReport.update({
+          parameters: parametersWithSnapshot
+        });
         savedReport = existingReport;
         console.log('Using existing user report to prevent duplicate:', existingReport.id);
       } else {
-        // Save new report to database
+        // Save new report to database with snapshot
         savedReport = await CustomReport.create({
           name: reportName,
           description: parameters.description || `Generated user report for ${reportData.userProfile.fullName}`,
           type: 'user',
-          parameters: parameters,
+          parameters: parametersWithSnapshot,
           createdBy: req.user.id
         });
       }
@@ -1052,6 +1082,13 @@ class AnalyticsController {
 
       const reportData = await reportGenerationService.generateDepartmentReport(parameters, req.user.role);
       
+      // Store data snapshot in parameters for static reports
+      const parametersWithSnapshot = {
+        ...parameters,
+        dataSnapshot: reportData,
+        snapshotGeneratedAt: new Date().toISOString()
+      };
+      
       // Check if a similar report already exists to prevent duplicates
       const reportName = parameters.title || `Department Report - ${reportData.departmentProfile.departmentName} - ${new Date().toLocaleDateString()}`;
       const existingReport = await CustomReport.findOne({
@@ -1067,16 +1104,19 @@ class AnalyticsController {
       
       let savedReport;
       if (existingReport) {
-        // Use existing report if found
+        // Update existing report with snapshot
+        await existingReport.update({
+          parameters: parametersWithSnapshot
+        });
         savedReport = existingReport;
         console.log('Using existing department report to prevent duplicate:', existingReport.id);
       } else {
-        // Save new report to database
+        // Save new report to database with snapshot
         savedReport = await CustomReport.create({
           name: reportName,
           description: parameters.description || `Generated department report for ${reportData.departmentProfile.departmentName}`,
           type: 'department',
-          parameters: parameters,
+          parameters: parametersWithSnapshot,
           createdBy: req.user.id
         });
       }
@@ -1119,6 +1159,13 @@ class AnalyticsController {
 
       const reportData = await reportGenerationService.generateCustomReportData(parameters);
       
+      // Store data snapshot in parameters for static reports
+      const parametersWithSnapshot = {
+        ...parameters,
+        dataSnapshot: reportData,
+        snapshotGeneratedAt: new Date().toISOString()
+      };
+      
       // Check if a similar report already exists to prevent duplicates
       const reportName = parameters.title || `Custom Report - ${new Date().toLocaleDateString()}`;
       const existingReport = await CustomReport.findOne({
@@ -1134,16 +1181,19 @@ class AnalyticsController {
       
       let savedReport;
       if (existingReport) {
-        // Use existing report if found
+        // Update existing report with snapshot
+        await existingReport.update({
+          parameters: parametersWithSnapshot
+        });
         savedReport = existingReport;
         console.log('Using existing custom report to prevent duplicate:', existingReport.id);
       } else {
-        // Save new report to database
+        // Save new report to database with snapshot
         savedReport = await CustomReport.create({
           name: reportName,
           description: parameters.description || 'Generated custom report with selected fields',
           type: 'custom',
-          parameters: parameters,
+          parameters: parametersWithSnapshot,
           createdBy: req.user.id
         });
       }
