@@ -464,7 +464,7 @@ class AnalyticsController {
           }
         });
 
-        const activeUsers = await User.count({ where: { departmentId: departmentId, isActive: true } });
+        const activeUsers = await User.count({ where: { departmentId: departmentId, isActive: true, status: 'approved' } });
         const departments = 1; // Only their department
 
         // Recent tickets/tasks (last 5) - show received tickets, not sent tickets
@@ -489,8 +489,8 @@ class AnalyticsController {
           limit: 5
         });
 
-        // Team performance: role-based metrics for accurate display
-        const users = await User.findAll({ where: { departmentId: departmentId, isActive: true }, include: [{ model: Department, attributes: ['name'] }] });
+        // Team performance: role-based metrics for accurate display - only include approved users
+        const users = await User.findAll({ where: { departmentId: departmentId, isActive: true, status: 'approved' }, include: [{ model: Department, attributes: ['name'] }] });
         const teamPerformance = await Promise.all(users.map(async (user) => {
           let tasksAssigned = 0;
           let tasksCompleted = 0;
@@ -506,9 +506,12 @@ class AnalyticsController {
             ticketsAssigned = await Ticket.count({ where: { assigned_to: user.id } });
             ticketsClosed = await Ticket.count({ where: { assigned_to: user.id, status: 'completed' } });
           } else if (user.role === 'department_head') {
-            // Department heads: focus on tickets managed by their department
+            // Department heads: focus on tickets managed by their department - only include approved users
             const departmentUsers = await User.findAll({ 
-              where: { departmentId: user.departmentId },
+              where: { 
+                departmentId: user.departmentId,
+                status: 'approved'
+              },
               attributes: ['id']
             });
             const departmentUserIds = departmentUsers.map(u => u.id);
@@ -595,7 +598,7 @@ class AnalyticsController {
           }
         });
 
-        const activeUsers = await User.count({ where: { isActive: true }, include: [{ model: Department, attributes: ['name'] }] });
+        const activeUsers = await User.count({ where: { isActive: true, status: 'approved' }, include: [{ model: Department, attributes: ['name'] }] });
         const departments = await Department.count();
 
         // Recent tickets/tasks (last 5)
@@ -608,8 +611,8 @@ class AnalyticsController {
           limit: 5
         });
 
-        // Team performance: role-based metrics for accurate display
-        const users = await User.findAll({ where: { isActive: true }, include: [{ model: Department, attributes: ['name'] }] });
+        // Team performance: role-based metrics for accurate display - only include approved users
+        const users = await User.findAll({ where: { isActive: true, status: 'approved' }, include: [{ model: Department, attributes: ['name'] }] });
         const teamPerformance = await Promise.all(users.map(async (user) => {
           let tasksAssigned = 0;
           let tasksCompleted = 0;
@@ -625,9 +628,12 @@ class AnalyticsController {
             ticketsAssigned = await Ticket.count({ where: { assigned_to: user.id } });
             ticketsClosed = await Ticket.count({ where: { assigned_to: user.id, status: 'completed' } });
           } else if (user.role === 'department_head') {
-            // Department heads: focus on tickets managed by their department
+            // Department heads: focus on tickets managed by their department - only include approved users
             const departmentUsers = await User.findAll({ 
-              where: { departmentId: user.departmentId },
+              where: { 
+                departmentId: user.departmentId,
+                status: 'approved'
+              },
               attributes: ['id']
             });
             const departmentUserIds = departmentUsers.map(u => u.id);
@@ -731,7 +737,7 @@ class AnalyticsController {
           }
         });
 
-        const activeUsers = await User.count({ where: { departmentId: departmentId, isActive: true }, include: [{ model: Department, attributes: ['name'] }] });
+        const activeUsers = await User.count({ where: { departmentId: departmentId, isActive: true, status: 'approved' }, include: [{ model: Department, attributes: ['name'] }] });
         const departments = 1;
 
         // Recent tickets/tasks (last 5)
@@ -746,8 +752,8 @@ class AnalyticsController {
           limit: 5
         });
 
-        // Team performance: tasks/tickets assigned/completed per user in their department
-        const users = await User.findAll({ where: { departmentId: departmentId, isActive: true }, include: [{ model: Department, attributes: ['name'] }] });
+        // Team performance: tasks/tickets assigned/completed per user in their department - only include approved users
+        const users = await User.findAll({ where: { departmentId: departmentId, isActive: true, status: 'approved' }, include: [{ model: Department, attributes: ['name'] }] });
         const teamPerformance = await Promise.all(users.map(async (user) => {
           const tasksAssigned = await Task.count({ where: { department_id: departmentId, assignedToId: user.id } });
           const tasksCompleted = await Task.count({ where: { department_id: departmentId, assignedToId: user.id, status: 'completed' } });
@@ -794,7 +800,7 @@ class AnalyticsController {
         }
       });
 
-      const activeUsers = await User.count({ where: { isActive: true }, include: [{ model: Department, attributes: ['name'] }] });
+      const activeUsers = await User.count({ where: { isActive: true, status: 'approved' }, include: [{ model: Department, attributes: ['name'] }] });
       const departments = await Department.count();
 
       // Recent tickets for admin (all tickets)
