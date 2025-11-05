@@ -457,9 +457,12 @@ async function getDepartmentAnalytics(departmentId, startDate, endDate) {
   // Add total distribution as first item for pie chart
   ticketMetrics.unshift(totalTicketDistribution);
 
-  // Generate user performance data
+  // Generate user performance data - only include approved users
   const users = await User.findAll({
-    where: { departmentId },
+    where: { 
+      departmentId,
+      status: 'approved'
+    },
     attributes: ['id', 'firstname', 'lastname', 'role']
   });
 
