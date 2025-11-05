@@ -69,7 +69,9 @@ async function calculateDepartmentAnalytics(departmentId, date) {
   const department = await Department.findByPk(departmentId, {
     include: [{
       model: User,
-      as: 'Users'
+      as: 'Users',
+      where: { status: 'approved' },
+      required: false
     }]
   });
 
@@ -109,9 +111,12 @@ async function calculateDepartmentAnalytics(departmentId, date) {
   // Calculate department efficiency score (0-100) - consider both tasks and tickets
   const totalTasks = tasks.length;
   
-  // Get tickets for the department
+  // Get tickets for the department - only include approved users
   const departmentUsers = await User.findAll({
-    where: { departmentId },
+    where: { 
+      departmentId,
+      status: 'approved'
+    },
     attributes: ['id']
   });
   
@@ -220,7 +225,9 @@ async function getDepartmentAnalytics(departmentId, startDate, endDate) {
     include: [{
       model: User,
       as: 'Users',
-      attributes: ['id', 'firstname', 'lastname', 'isActive']
+      attributes: ['id', 'firstname', 'lastname', 'isActive'],
+      where: { status: 'approved' },
+      required: false
     }]
   });
 
@@ -268,9 +275,12 @@ async function getDepartmentAnalytics(departmentId, startDate, endDate) {
   // Calculate department efficiency score (0-100) - consider both tasks and tickets
   const totalTasks = allTasks.length;
   
-  // Get tickets for the department
+  // Get tickets for the department - only include approved users
   const deptUsers = await User.findAll({
-    where: { departmentId },
+    where: { 
+      departmentId,
+      status: 'approved'
+    },
     attributes: ['id']
   });
   
@@ -399,9 +409,12 @@ async function getDepartmentAnalytics(departmentId, startDate, endDate) {
   taskMetrics.unshift(totalTaskDistribution);
 
   // Generate ticket metrics from tickets received by the department
-  // Get all users in the department first
+  // Get all approved users in the department first
   const departmentUsers = await User.findAll({
-    where: { departmentId },
+    where: { 
+      departmentId,
+      status: 'approved'
+    },
     attributes: ['id', 'firstname', 'lastname', 'role']
   });
   
