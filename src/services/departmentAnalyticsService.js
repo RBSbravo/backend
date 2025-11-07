@@ -82,7 +82,8 @@ async function calculateDepartmentAnalytics(departmentId, date) {
     totalEmployees: department.Users.length,
     activeEmployees: activeEmployees,
     departmentEfficiency: 0,
-    averageTaskCompletionTime: 0
+    averageTaskCompletionTime: 0,
+    averageTicketCompletionTime: 0
   };
 
   // Calculate department efficiency
@@ -138,6 +139,22 @@ async function calculateDepartmentAnalytics(departmentId, date) {
   const completedTickets = tickets.filter(ticket => ticket.status === 'completed');
   const closedTickets = tickets.filter(ticket => ticket.status === 'declined');
   const totalTickets = tickets.length;
+  
+  // Calculate average ticket completion time (for completed and closed tickets)
+  const resolvedTickets = tickets.filter(ticket => 
+    ticket.status === 'completed' || ticket.status === 'declined'
+  );
+  if (resolvedTickets.length > 0) {
+    const totalCompletionTime = resolvedTickets.reduce((sum, ticket) => {
+      const completionTime = new Date(ticket.updatedAt) - new Date(ticket.createdAt);
+      // Ensure completion time is not negative (updatedAt should be >= createdAt)
+      return sum + Math.max(0, completionTime);
+    }, 0);
+    analytics.averageTicketCompletionTime = totalCompletionTime / resolvedTickets.length;
+  } else {
+    // Set to null when no resolved tickets to indicate no data
+    analytics.averageTicketCompletionTime = null;
+  }
   
   // Calculate combined efficiency from both tasks and tickets
   let taskEfficiency = 0;
@@ -243,7 +260,8 @@ async function getDepartmentAnalytics(departmentId, startDate, endDate) {
     totalEmployees: department.Users.length,
     activeEmployees: activeEmployees,
     departmentEfficiency: 0,
-    averageTaskCompletionTime: 0
+    averageTaskCompletionTime: 0,
+    averageTicketCompletionTime: 0
   };
 
   // Get all tasks for the department
@@ -299,6 +317,22 @@ async function getDepartmentAnalytics(departmentId, startDate, endDate) {
   const completedTickets = deptTickets.filter(ticket => ticket.status === 'completed');
   const closedTickets = deptTickets.filter(ticket => ticket.status === 'declined');
   const totalTickets = deptTickets.length;
+  
+  // Calculate average ticket completion time (for completed and closed tickets)
+  const resolvedTickets = deptTickets.filter(ticket => 
+    ticket.status === 'completed' || ticket.status === 'declined'
+  );
+  if (resolvedTickets.length > 0) {
+    const totalCompletionTime = resolvedTickets.reduce((sum, ticket) => {
+      const completionTime = new Date(ticket.updatedAt) - new Date(ticket.createdAt);
+      // Ensure completion time is not negative (updatedAt should be >= createdAt)
+      return sum + Math.max(0, completionTime);
+    }, 0);
+    departmentStats.averageTicketCompletionTime = totalCompletionTime / resolvedTickets.length;
+  } else {
+    // Set to null when no resolved tickets to indicate no data
+    departmentStats.averageTicketCompletionTime = null;
+  }
   
   // Calculate combined efficiency from both tasks and tickets
   let taskEfficiency = 0;
