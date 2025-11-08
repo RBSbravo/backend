@@ -114,15 +114,21 @@ class ReportGenerationService {
       // Calculate insights
       let insights = {};
       if (includeInsights) {
-        const resolvedTicketsWithTimes = tickets.filter(t => t.status === 'completed' && t.updatedAt);
+        // Include both completed and declined tickets as resolved (same as analytics dashboard)
+        const resolvedTicketsWithTimes = tickets.filter(t => 
+          (t.status === 'completed' || t.status === 'declined') && t.updatedAt
+        );
         const averageResolutionTime = resolvedTicketsWithTimes.length > 0 
           ? resolvedTicketsWithTimes.reduce((sum, ticket) => {
               const resolutionTime = new Date(ticket.updatedAt) - new Date(ticket.createdAt);
-              return sum + resolutionTime;
+              // Ensure resolution time is not negative (updatedAt should be >= createdAt)
+              return sum + Math.max(0, resolutionTime);
             }, 0) / resolvedTicketsWithTimes.length
           : 0;
 
-        const resolutionRate = totalTickets > 0 ? (resolvedTickets / totalTickets * 100).toFixed(1) : 0;
+        // Resolution rate includes both completed and declined tickets
+        const totalResolvedTickets = tickets.filter(t => t.status === 'completed' || t.status === 'declined').length;
+        const resolutionRate = totalTickets > 0 ? (totalResolvedTickets / totalTickets * 100).toFixed(1) : 0;
 
 
         // Most active departments
@@ -512,15 +518,21 @@ class ReportGenerationService {
       if (includeInsights) {
         if (user.role === 'department_head') {
           // Department head insights - focus on tickets
-          const completedTicketsWithTimes = tickets.filter(t => t.status === 'completed' && t.updatedAt);
-          const averageTicketResolutionTime = completedTicketsWithTimes.length > 0 
-            ? completedTicketsWithTimes.reduce((sum, ticket) => {
+          // Include both completed and declined tickets as resolved (same as analytics dashboard)
+          const resolvedTicketsWithTimes = tickets.filter(t => 
+            (t.status === 'completed' || t.status === 'declined') && t.updatedAt
+          );
+          const averageTicketResolutionTime = resolvedTicketsWithTimes.length > 0 
+            ? resolvedTicketsWithTimes.reduce((sum, ticket) => {
                 const resolutionTime = new Date(ticket.updatedAt) - new Date(ticket.createdAt);
-                return sum + resolutionTime;
-              }, 0) / completedTicketsWithTimes.length
+                // Ensure resolution time is not negative (updatedAt should be >= createdAt)
+                return sum + Math.max(0, resolutionTime);
+              }, 0) / resolvedTicketsWithTimes.length
             : 0;
 
-          const resolutionRate = totalTickets > 0 ? (closedTickets / totalTickets * 100).toFixed(1) : 0;
+          // Resolution rate includes both completed and declined tickets
+          const totalResolvedTickets = tickets.filter(t => t.status === 'completed' || t.status === 'declined').length;
+          const resolutionRate = totalTickets > 0 ? (totalResolvedTickets / totalTickets * 100).toFixed(1) : 0;
 
           // Ticket priority distribution
           const priorityDistribution = {};
@@ -591,16 +603,22 @@ class ReportGenerationService {
               }, 0) / completedTasksWithTimes.length
             : 0;
 
-          const completedTicketsWithTimes = tickets.filter(t => t.status === 'completed' && t.updatedAt);
-          const averageTicketResolutionTime = completedTicketsWithTimes.length > 0 
-            ? completedTicketsWithTimes.reduce((sum, ticket) => {
+          // Include both completed and declined tickets as resolved (same as analytics dashboard)
+          const resolvedTicketsWithTimes = tickets.filter(t => 
+            (t.status === 'completed' || t.status === 'declined') && t.updatedAt
+          );
+          const averageTicketResolutionTime = resolvedTicketsWithTimes.length > 0 
+            ? resolvedTicketsWithTimes.reduce((sum, ticket) => {
                 const resolutionTime = new Date(ticket.updatedAt) - new Date(ticket.createdAt);
-                return sum + resolutionTime;
-              }, 0) / completedTicketsWithTimes.length
+                // Ensure resolution time is not negative (updatedAt should be >= createdAt)
+                return sum + Math.max(0, resolutionTime);
+              }, 0) / resolvedTicketsWithTimes.length
             : 0;
 
           const taskCompletionRate = totalTasks > 0 ? (completedTasks / totalTasks * 100).toFixed(1) : 0;
-          const ticketResolutionRate = totalTickets > 0 ? (closedTickets / totalTickets * 100).toFixed(1) : 0;
+          // Resolution rate includes both completed and declined tickets
+          const totalResolvedTicketsForAdmin = tickets.filter(t => t.status === 'completed' || t.status === 'declined').length;
+          const ticketResolutionRate = totalTickets > 0 ? (totalResolvedTicketsForAdmin / totalTickets * 100).toFixed(1) : 0;
 
           insights = {
             averageTaskDuration: Math.round(averageTaskDuration / (1000 * 60 * 60 * 24) * 10) / 10,
@@ -765,7 +783,8 @@ class ReportGenerationService {
       const totalTasks = tasks.length;
       const totalTickets = tickets.length;
       const completedTasks = tasks.filter(t => t.status === 'completed').length;
-      const resolvedTickets = tickets.filter(t => t.status === 'completed').length;
+      // Include both completed and declined tickets as resolved (same as analytics dashboard)
+      const resolvedTickets = tickets.filter(t => t.status === 'completed' || t.status === 'declined').length;
 
       // Calculate insights
       let insights = {};
@@ -1090,7 +1109,8 @@ class ReportGenerationService {
           data.tickets = await Ticket.findAll({ where: ticketWhereClause });
         }
         const totalTickets = data.tickets.length;
-        const resolvedTickets = data.tickets.filter(t => t.status === 'completed').length;
+        // Include both completed and declined tickets as resolved (same as analytics dashboard)
+        const resolvedTickets = data.tickets.filter(t => t.status === 'completed' || t.status === 'declined').length;
         customMetrics.ticketResolutionRate = totalTickets > 0 ? (resolvedTickets / totalTickets * 100).toFixed(1) : 0;
       }
       if (selectedFields.includes('averageTicketResolutionTime')) {
@@ -1104,11 +1124,15 @@ class ReportGenerationService {
           }
           data.tickets = await Ticket.findAll({ where: ticketWhereClause });
         }
-        const resolvedTickets = data.tickets.filter(t => t.status === 'completed' && t.updatedAt);
+        // Include both completed and declined tickets as resolved (same as analytics dashboard)
+        const resolvedTickets = data.tickets.filter(t => 
+          (t.status === 'completed' || t.status === 'declined') && t.updatedAt
+        );
         customMetrics.averageTicketResolutionTime = resolvedTickets.length > 0 
           ? resolvedTickets.reduce((sum, ticket) => {
               const resolutionTime = new Date(ticket.updatedAt) - new Date(ticket.createdAt);
-              return sum + resolutionTime;
+              // Ensure resolution time is not negative (updatedAt should be >= createdAt)
+              return sum + Math.max(0, resolutionTime);
             }, 0) / resolvedTickets.length / (1000 * 60 * 60 * 24) // Convert to days
           : 0;
       }
